@@ -1,0 +1,37 @@
+# 纯云 server 模式配置（无代理、无微信，靠元宝 cookie 解析视频号分享链接）
+# 挂载到容器内 /data/config.yaml（compose 用 WX_CHANNELS_DOWNLOAD_CONFIG_FILEPATH 指定）
+
+# 工作目录：数据库等运行时文件写入这里
+workdir: "/data"
+
+# API 服务：容器内绑 0.0.0.0；对外由 nginx 反代 + basic auth 挡
+api:
+  protocol: "http"
+  hostname: "0.0.0.0"
+  port: 2022
+
+# server 模式本就关代理；写明更清晰
+proxy:
+  enabled: false
+  system: false
+  skipInstallRootCert: true
+
+# 下载
+download:
+  dir: "/data/downloads"
+  filenameTemplate: "{{filename}}_{{spec}}"
+  maxRunning: 3
+
+# 数据库（仅 sqlite 真接线；mysql/postgres 配置项是死配置）
+db:
+  type: "sqlite"
+  filepath: "/data/data.db"
+
+# MCP：想用 AI agent 一键下载就开；endpoint = http://<host>/mcp（经 nginx 鉴权后）
+mcp:
+  enabled: true
+
+# ★ 核心：把元宝 cookie 整段贴进 sphCookie
+# 获取：浏览器登录 yuanbao.tencent.com → F12 → Network → 任一请求的 Cookie 请求头，整段复制
+cloudflare:
+  sphCookie: ""

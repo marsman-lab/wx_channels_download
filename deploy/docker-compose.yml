@@ -1,0 +1,28 @@
+# 纯 server 模式部署（无微信、无桌面、无 MITM 代理）
+# 用法：docker compose -f deploy/docker-compose.yml up -d --build
+# 对外：把你现有的 nginx 容器接入 wx-net，反代到 http://wx-dl:2022 并加 basic auth（见 deploy/README.md）
+#
+# 数据（数据库 + 下载文件）落在宿主机绝对路径，默认 /var/lib/wx-dl（脱离项目目录，无需改 .dockerignore）；
+# 换路径：WX_DL_DATA_DIR=/your/path docker compose -f deploy/docker-compose.yml up -d
+
+services:
+  wx-dl:
+    build:
+      context: ..                 # 项目根（源码）作为构建上下文
+      dockerfile: deploy/Dockerfile
+    image: wx-dl-server:local
+    container_name: wx-dl
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+      - WX_CHANNELS_DOWNLOAD_CONFIG_FILEPATH=/data/config.yaml
+    volumes:
+      - ${WX_DL_DATA_DIR:-/var/lib/wx-dl}:/data   # 数据库 + 下载文件；默认 /var/lib/wx-dl
+      - ./config.yaml:/data/config.yaml:ro        # 配置（从 config.example.yaml 复制；真实文件被 gitignore）
+    networks:
+      - wx-net
+    # 不发布端口：只对 wx-net 内的 nginx 可见；公网由你的 nginx + basic auth 挡
+
+networks:
+  wx-net:
+    name: wx-net
