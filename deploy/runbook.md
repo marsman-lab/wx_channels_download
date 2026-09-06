@@ -44,6 +44,8 @@ cloudflare:
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
+> 国内构建已默认加速（goproxy.cn + 清华 apt 镜像 + BuildKit 缓存挂载）；慢或要换源见 **附录 B**。
+
 首次会多阶段编译 Go（几分钟），之后只跑 `debian:stable-slim` 运行时。容器名 `wx-dl`，数据默认落宿主机 `/var/lib/wx-dl`（换路径加 `WX_DL_DATA_DIR=/xxx` 前缀）。
 
 ## 4. 服务自检（容器内）
@@ -219,3 +221,48 @@ cloudflare:
 - **会过期**：失效后分享链接解析会报「缺少 yuanbao.tencent.com Cookie」，重新登录复制即可。
 - **封号风险**：用私号在服务器侧反复调元宝解析接口有被封风险，建议小号（项目 `docs/releases/260817.md` 自己提醒过）。
 - 代码里 `yuanbao.go` 还硬编码了一些设备指纹头（`t-userid`/`x-id`/`x-device-id`/`x-hy92`/`x-hy93`），这些不用你管，已内置；你只需提供 Cookie。
+
+---
+
+## 附录 B：国内构建加速
+
+Dockerfile 默认已开国内加速，`docker compose up --build` 直接就是快的。慢或要换源时用 build-arg 覆盖。
+
+### 默认值
+
+- Go 模块代理：`GOPROXY=https://goproxy.cn,direct`（+ `GOSUMDB=off`，go.sum 已在仓库内）
+- apt 镜像：`APT_MIRROR=mirrors.tuna.tsinghua.edu.cn`
+- 模块/编译缓存：BuildKit cache mount（`/go/pkg/mod` + `/root/.cache/go-build`），跨构建复用
+
+### 换源
+
+`docker compose up --build` 不接受 `--build-arg`，要换源得先 `build` 再 `up`：
+
+```sh
+# apt 换阿里云
+docker compose -f deploy/docker-compose.yml build --build-arg APT_MIRROR=mirrors.aliyun.com
+
+# Go 代理换阿里云
+docker compose -f deploy/docker-compose.yml build --build-arg GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+
+# 两个一起
+docker compose -f deploy/docker-compose.yml build \
+  --build-arg APT_MIRROR=mirrors.aliyun.com \
+  --build-arg GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+
+# build 完再起
+docker compose -f deploy/docker-compose.yml up -d
+```
+
+### 拉基础镜像慢（host 级，可选）
+
+基础镜像（`golang`、`debian`）首次拉取慢，配 Docker daemon registry mirror。编辑 `/etc/docker/daemon.json`：
+
+```json
+{
+  "registry-mirrors": ["https://xxxx.mirror.aliyuncs.com"]
+}
+```
+
+然后 `sudo systemctl restart docker`。
+> 公共 mirror（ustc 等）近年陆续受限；阿里云个人加速器地址需到 https://cr.console.aliyun.com 申请。基础镜像一旦缓存到本地，后续构建不重新拉。
