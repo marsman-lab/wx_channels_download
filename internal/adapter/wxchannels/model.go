@@ -1234,6 +1234,7 @@ func shared_video_profile_to_channels_object(resp wxchannels.ChannelsSharedFeedP
 		ThumbUrl:  strings.TrimSpace(feed_info.Coverurl),
 		CoverUrl:  strings.TrimSpace(feed_info.Coverurl),
 		MediaType: wxchannels.MediaTypeVideo,
+		Spec:      shared_feed_video_spec(video_url),
 	}}
 	obj := &wxchannels.ChannelsObject{
 		ID:            object_id,
@@ -1327,6 +1328,23 @@ func shared_feed_video_url(feed_info wxchannels.SharedFeedinfo) string {
 		return video_url
 	}
 	return strings.TrimSpace(feed_info.H265VideoInfo.VideoURL)
+}
+
+// shared_feed_video_spec extracts the X-snsvideoflag spec from the share-link
+// video URL. Populating Media[0].Spec makes PickSpec return a non-empty spec so
+// BuildDownloadURLWithSpec takes the append path (preserving sign) instead of
+// the original-strip path, which drops sign and makes the CDN return HTTP 400.
+// local: fix for share-link (yuanbao) downloads failing with 400.
+func shared_feed_video_spec(video_url string) []wxchannels.ChannelsMediaSpec {
+	u, err := url.Parse(video_url)
+	if err != nil || u == nil {
+		return nil
+	}
+	ff := strings.TrimSpace(u.Query().Get("X-snsvideoflag"))
+	if ff == "" {
+		return nil
+	}
+	return []wxchannels.ChannelsMediaSpec{{FileFormat: ff}}
 }
 
 func parse_shared_feed_profile(content_json json.RawMessage, allow_envelope bool) (wxchannels.ChannelsSharedFeedProfileResp, bool, error) {
