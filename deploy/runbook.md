@@ -73,9 +73,10 @@ docker exec <你的nginx容器名> getent hosts wx-dl    # 验证能解析
 ### 5.2 生成 htpasswd
 
 ```sh
-docker run --rm --entrypoint htpasswd httpd:alpine -nbB wx '你设的密码' \
+docker run --rm --entrypoint htpasswd httpd:alpine -nbm wx '你设的密码' \
   > /path/to/nginx/conf/wx-dl.htpasswd
 # 按你 nginx 的 volume 习惯挂进容器（如 /etc/nginx/wx-dl.htpasswd）
+# 用 -m（apr1 MD5），nginx 原生支持；别用 -B（bcrypt），多数 nginx 镜像不支持 bcrypt，会报 crypt_r() failed 500
 ```
 
 ### 5.3 nginx location 配置

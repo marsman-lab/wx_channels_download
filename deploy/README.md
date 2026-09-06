@@ -66,8 +66,9 @@ location / {
 ### 生成 htpasswd
 
 ```sh
-docker run --rm --entrypoint htpasswd httpd:alpine -c /tmp/.htpasswd wx
-# 把生成的 .htpasswd 挂进 nginx 的 /etc/nginx/.htpasswd
+docker run --rm --entrypoint htpasswd httpd:alpine -nbm wx '你设的密码' \
+  > /path/to/nginx/conf/.htpasswd
+# 把生成的 .htpasswd 挂进 nginx 的 /etc/nginx/.htpasswd（用 -m apr1 MD5；别用 -B bcrypt，nginx 多不支持，会 500）
 ```
 
 > 你的 nginx 若是 `network_mode: host`：把 compose 里 wx-dl 改成 `ports: ["127.0.0.1:2022:2022"]`，nginx 直接 `proxy_pass http://127.0.0.1:2022;`，省去挂网络。
