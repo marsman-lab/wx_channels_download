@@ -9,8 +9,12 @@ WEB_PORT="${WEB_PORT:-3000}"
 CONTAINER_HOSTNAME="${CONTAINER_HOSTNAME:-wx-linux}"
 TZ_VALUE="${TZ:-Asia/Shanghai}"
 RESOLUTION="${RESOLUTION:-1920x1080x24}"
-PUID_VALUE="${PUID:-1000}"
-PGID_VALUE="${PGID:-1000}"
+# 默认跟随调用用户，而不是写死 1000：容器内 abc(uid 1000) 需要能写 CONFIG_DIR，
+# 而 CONFIG_DIR 通常落在调用者自己的目录，所以用当前用户的 uid/gid 才写得进去。
+CURRENT_UID="$(id -u)"
+CURRENT_GID="$(id -g)"
+PUID_VALUE="${PUID:-${CURRENT_UID}}"
+PGID_VALUE="${PGID:-${CURRENT_GID}}"
 
 if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
     echo "Container already exists: $NAME" >&2
