@@ -1,4 +1,8 @@
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/lscr.io/linuxserver/webtop:ubuntu-xfce
+# 基础镜像默认官方多架构源（Mac/ARM 宿主会解析出 linux/arm64 变体）。
+# 国内 x86 服务器若拉不动官方源，可 --build-arg BASE_IMAGE= 指向华为云 ddn-k8s
+# 镜像（注意该镜像源只有 amd64 变体，装 arm64 微信 deb 会失败）。
+ARG BASE_IMAGE=lscr.io/linuxserver/webtop:ubuntu-xfce
+FROM ${BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=zh_CN.UTF-8 \
