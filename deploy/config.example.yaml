@@ -41,7 +41,7 @@ cloudflare:
 douyin:
   cookie: ""
 
-# B 站：匿名可下普通清晰度；要账号可看的高清（如 1080P）填 SESSDATA
-# 获取：B 站浏览器 F12 → 任一请求 Cookie 中的 SESSDATA=... 值
+# B 站：建议填整段浏览器 Cookie（含 buvid3/buvid4，用于过 B 站风控 HTTP 412；SESSDATA 用于账号高清清晰度）
+# 获取：B 站浏览器 F12 → Network → 任一 www.bilibili.com 请求 → Request Headers → Cookie 整段复制
 bilibili:
   cookie: ""
