@@ -61,12 +61,13 @@ docker compose -f deploy/docker-compose.yml exec wx-dl \
 
 ## 5. 接入你现有的 nginx（basic auth + 反代）
 
-### 5.1 把 nginx 容器接入 wx-net
+### 5.1 把 nginx 容器接入 shared_net
 
-`docker compose up` 已创建网络 `wx-net`：
+compose 挂在外部网络 `shared_net`（host 共享网，由 `docker-network-init.service` 预建，nginx 通常已在网）：
 
 ```sh
-docker network connect wx-net <你的nginx容器名>
+# 若你的 nginx 还没在 shared_net 上，先连一次：
+docker network connect shared_net <你的nginx容器名>
 docker exec <你的nginx容器名> getent hosts wx-dl    # 验证能解析
 ```
 
@@ -192,7 +193,7 @@ docker compose -f deploy/docker-compose.yml exec wx-dl bash
 | 容器 | `wx-dl`（debian-slim，纯 server，无微信/代理/证书） |
 | 数据 | `/var/lib/wx-dl`（或 `WX_DL_DATA_DIR`） |
 | 配置 | `/opt/wx-dl/deploy/config.yaml`（gitignored，填 sphCookie） |
-| 内部端口 | `wx-dl:2022`（仅 wx-net，nginx 反代+basic auth） |
+| 内部端口 | `wx-dl:2022`（仅 shared_net 内容器可达，nginx 反代+basic auth） |
 | MCP | `https://your.domain/mcp` |
 | 不需要 | root/管理员、证书、系统代理、TUN、微信 |
 

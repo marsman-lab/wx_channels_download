@@ -23,19 +23,19 @@ docker compose -f deploy/docker-compose.yml up -d --build
 
 ## 2. 接入你现有的 nginx（basic auth）
 
-`wx-dl` 不对外发布端口，只在 docker 网络 `wx-net` 内可达。
+`wx-dl` 不对外发布端口，只在共享外部网络 `shared_net` 内可达（该网由 `docker-network-init.service` 预建，host 上所有容器都在此网、按容器名互访，nginx 亦然）。注意此布局的安全含义：host 上任一容器都能直连 `wx-dl:2022`，鉴权完全依赖下面 nginx 的 basic auth；若想从网络层隔离（私有网络只挂 nginx），见 `docker-compose.yml` 头注释指向的 git 历史写法。
 
-### 把 nginx 容器加入 wx-net
+### 让 nginx 能访问 wx-dl（接入 shared_net）
 
-- nginx 由另一个 compose 管 → 在那个 compose 里：
+- nginx 由另一个 compose 管 → 在那个 compose 里声明 external 网络：
   ```yaml
   services:
     nginx:
-      networks: [default, wx-net]
+      networks: [default, shared_net]
   networks:
-    wx-net: { external: true }
+    shared_net: { external: true }
   ```
-- 或临时连接：`docker network connect wx-net <你的nginx容器名>`
+- 或临时连接：`docker network connect shared_net <你的nginx容器名>`
 
 ### nginx 配置片段
 
@@ -113,7 +113,7 @@ curl -u wx:你的密码 -X POST http://<host>/api/v1/download_task/create \
 | 文件 | 作用 |
 |---|---|
 | `Dockerfile` | 多阶段构建：golang:1.20 编译（CGO=0 + sqlite_only，纯静态）→ debian:stable-slim 运行 |
-| `docker-compose.yml` | 只起 wx-dl，不发布端口，挂 wx-net；数据走宿主机绝对路径（`WX_DL_DATA_DIR`，默认 `/var/lib/wx-dl`） |
+| `docker-compose.yml` | 只起 wx-dl，不发布端口，挂共享外部网络 `shared_net`；数据走宿主机绝对路径（`WX_DL_DATA_DIR`，默认 `/var/lib/wx-dl`） |
 | `config.example.yaml` | 配置**模板**（监听地址、下载目录、数据库、元宝 cookie 等）；复制为 `config.yaml` 后填写真实 cookie，后者被 .gitignore 忽略、不进版本库 |
 
 ## 跟进上游（fork 工作流）
