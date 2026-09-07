@@ -112,7 +112,7 @@ curl -u wx:你的密码 -X POST http://<host>/api/v1/download_task/create \
 
 | 文件 | 作用 |
 |---|---|
-| `Dockerfile` | 多阶段构建：golang:1.20 编译（CGO=0 + sqlite_only，纯静态）→ debian:stable-slim 运行 |
+| `Dockerfile` | 多阶段构建：golang:1.27 编译（CGO=0 + sqlite_only，纯静态）→ debian:stable-slim 运行 |
 | `docker-compose.yml` | 只起 wx-dl，不发布端口，挂共享外部网络 `shared_net`；数据走宿主机绝对路径（`WX_DL_DATA_DIR`，默认 `/var/lib/wx-dl`） |
 | `config.example.yaml` | 配置**模板**（监听地址、下载目录、数据库、元宝 cookie 等）；复制为 `config.yaml` 后填写真实 cookie，后者被 .gitignore 忽略、不进版本库 |
 

@@ -11,7 +11,7 @@
 # 如还要加速基础镜像拉取，配 Docker daemon registry mirror（见 deploy/runbook.md）。
 
 # ---- build stage ----
-FROM golang:1.20-bullseye AS build
+FROM golang:1.27-bullseye AS build
 ARG GOPROXY=https://goproxy.cn,direct
 ENV GOPROXY=${GOPROXY} GOSUMDB=off
 WORKDIR /src

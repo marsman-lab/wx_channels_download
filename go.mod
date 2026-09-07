@@ -1,6 +1,6 @@
 module wx_channel
 
-go 1.20
+go 1.24.0
 
 exclude (
 	github.com/andybalholm/brotli v1.2.0
@@ -40,7 +40,6 @@ require (
 	github.com/pterm/pterm v0.12.50
 	github.com/qtgolang/SunnyNet v1.4.0
 	github.com/rs/zerolog v1.34.0
-	github.com/samber/lo v1.39.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.16.0
 	github.com/tetratelabs/wazero v1.7.3
