@@ -1,6 +1,11 @@
 # 纯 server 模式部署（无微信、无桌面、无 MITM 代理）
 # 用法：docker compose -f deploy/docker-compose.yml up -d --build
-# 对外：把你现有的 nginx 容器接入 wx-net，反代到 http://wx-dl:2022 并加 basic auth（见 deploy/README.md）
+# 对外：通过你已有的 nginx 反代到 http://wx-dl:2022 并加 basic auth（见 deploy/README.md）
+#
+# 网络：接入宿主机共享外部网络 shared_net（由 docker-network-init.service 预建），
+#       本机所有容器都在该网，按容器名互相访问（nginx 也在 shared_net 上）。
+#       注意：这样 host 上任一容器都能直连 :2022（API 零鉴权），安全只靠 nginx
+#       basic auth 一层。若想改回「私有 wx-net 只挂 nginx」的隔离写法，见 git 历史。
 #
 # 数据（数据库 + 下载文件）落在宿主机绝对路径，默认 /var/lib/wx-dl（脱离项目目录，无需改 .dockerignore）；
 # 换路径：WX_DL_DATA_DIR=/your/path docker compose -f deploy/docker-compose.yml up -d
@@ -20,9 +25,10 @@ services:
       - ${WX_DL_DATA_DIR:-/var/lib/wx-dl}:/data   # 数据库 + 下载文件；默认 /var/lib/wx-dl
       - ./config.yaml:/data/config.yaml:ro        # 配置（从 config.example.yaml 复制；真实文件被 gitignore）
     networks:
-      - wx-net
-    # 不发布端口：只对 wx-net 内的 nginx 可见；公网由你的 nginx + basic auth 挡
+      - shared_net
+    # 不发布端口：只对网络内容器可见；公网由你的 nginx + basic auth 挡
 
+# 通过 docker-network-init.service 已创建
 networks:
-  wx-net:
-    name: wx-net
+  shared_net:
+    external: true
