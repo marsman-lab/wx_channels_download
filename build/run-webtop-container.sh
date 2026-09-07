@@ -6,6 +6,7 @@ IMAGE="${IMAGE:-ghcr.io/ltaoo/wx_video_download:v260607}"
 NAME="${NAME:-wx_download}"
 CONFIG_DIR="${CONFIG_DIR:-/var/lib/wx-dl/webtop}"
 WEB_PORT="${WEB_PORT:-3000}"
+NETWORK="${NETWORK:-shared_net}"
 CONTAINER_HOSTNAME="${CONTAINER_HOSTNAME:-wx-linux}"
 TZ_VALUE="${TZ:-Asia/Shanghai}"
 RESOLUTION="${RESOLUTION:-1920x1080x24}"
@@ -24,6 +25,7 @@ run_args=(
     run
     -d
     --name "$NAME"
+    --network "$NETWORK"
     --restart=unless-stopped
     --hostname "$CONTAINER_HOSTNAME"
     --security-opt seccomp=unconfined
