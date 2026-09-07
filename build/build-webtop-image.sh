@@ -48,8 +48,12 @@ fi
 echo "Building wx_video_download for ${PLATFORM}..."
 (
     cd "$ROOT_DIR"
-    env GOCACHE="$GOCACHE" CGO_ENABLED=0 GOOS=linux GOARCH="$TARGETARCH" \
-        bash build/build-go.sh -trimpath -tags "with_gvisor,embed_inject,sqlite_only,embed_frontend_inject" -ldflags="-s -w -X main.Mode=release" \
+    # 宿主 go 直接交叉编译。不走 build-go.sh(go run buildgo)：buildgo 会把
+    # 工具自身按 GOOS/GOARCH 编译后再 exec，在 macOS 等"宿主 != 目标"的环境
+    # 直接 exec format error。go build 只产出文件无此问题，且 Linux 宿主同样
+    # 适用。代价是跳过 buildgo 的 esbuild 压缩（仅体积差异，功能不变）。
+    env CGO_ENABLED=0 GOOS=linux GOARCH="$TARGETARCH" \
+        go build -trimpath -tags "with_gvisor,embed_inject,sqlite_only,embed_frontend_inject" -ldflags="-s -w -X main.Mode=release" \
         -o "$BUILD_DIR/wx_video_download" .
 )
 
