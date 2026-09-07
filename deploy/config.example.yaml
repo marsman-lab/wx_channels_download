@@ -35,3 +35,13 @@ mcp:
 # 获取：浏览器登录 yuanbao.tencent.com → F12 → Network → 任一请求的 Cookie 请求头，整段复制
 cloudflare:
   sphCookie: ""
+
+# 平台 cookie（均可选）
+# 抖音：mobile 端优先、不需要 cookie；此 cookie 仅 web 端 API 回退用
+douyin:
+  cookie: ""
+
+# B 站：匿名可下普通清晰度；要账号可看的高清（如 1080P）填 SESSDATA
+# 获取：B 站浏览器 F12 → 任一请求 Cookie 中的 SESSDATA=... 值
+bilibili:
+  cookie: ""
