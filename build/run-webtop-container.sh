@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${IMAGE:-ghcr.io/ltaoo/wx_video_download:v260607}"
 NAME="${NAME:-wx_download}"
-CONFIG_DIR="${CONFIG_DIR:-/config}"
+CONFIG_DIR="${CONFIG_DIR:-/var/lib/wx-dl/webtop}"
 WEB_PORT="${WEB_PORT:-3000}"
 CONTAINER_HOSTNAME="${CONTAINER_HOSTNAME:-wx-linux}"
 TZ_VALUE="${TZ:-Asia/Shanghai}"
