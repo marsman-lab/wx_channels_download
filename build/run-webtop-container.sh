@@ -9,20 +9,16 @@ WEB_PORT="${WEB_PORT:-3000}"
 CONTAINER_HOSTNAME="${CONTAINER_HOSTNAME:-wx-linux}"
 TZ_VALUE="${TZ:-Asia/Shanghai}"
 RESOLUTION="${RESOLUTION:-1920x1080x24}"
-# 默认跟随调用用户，而不是写死 1000：容器内 abc(uid 1000) 需要能写 CONFIG_DIR，
-# 而 CONFIG_DIR 通常落在调用者自己的目录，所以用当前用户的 uid/gid 才写得进去。
-CURRENT_UID="$(id -u)"
-CURRENT_GID="$(id -g)"
-PUID_VALUE="${PUID:-${CURRENT_UID}}"
-PGID_VALUE="${PGID:-${CURRENT_GID}}"
+# 默认用 root(0/0) 运行：容器内 abc 以 root 身份工作，任意 CONFIG_DIR 都可写，
+# 无需手动 mkdir/对齐宿主 uid。需要非 root 时用 PUID/PGID 显式覆盖。
+PUID_VALUE="${PUID:-0}"
+PGID_VALUE="${PGID:-0}"
 
 if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
     echo "Container already exists: $NAME" >&2
     echo "Use NAME=another_name or remove the existing container first." >&2
     exit 1
 fi
-
-mkdir -p "$CONFIG_DIR"
 
 run_args=(
     run
