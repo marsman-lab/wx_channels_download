@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Copy files that rarely change and are needed by the install step
 COPY SunnyNet.cer /usr/local/share/ca-certificates/SunnyNet.crt
-COPY WeChatLinux_arm64.deb /tmp/WeChatLinux_arm64.deb
+COPY WeChat.deb /tmp/WeChat.deb
 
 # Expensive layer: cached as long as base image, cert, and deb don't change
 RUN set -eux; \
@@ -58,7 +58,7 @@ RUN set -eux; \
         libxtst6 \
         libxshmfence1 \
         libdrm2; \
-    apt-get install -y --no-install-recommends /tmp/WeChatLinux_arm64.deb; \
+    apt-get install -y --no-install-recommends /tmp/WeChat.deb; \
     sed -i 's/# *zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen; \
     locale-gen; \
     update-ca-certificates; \
@@ -67,7 +67,7 @@ RUN set -eux; \
     certutil -d sql:/etc/pki/nssdb -D -n SunnyRoot >/dev/null 2>&1 || true; \
     certutil -d sql:/etc/pki/nssdb -D -n SunnyNet >/dev/null 2>&1 || true; \
     certutil -d sql:/etc/pki/nssdb -A -n SunnyNet -t "CT,C,C" -i /usr/local/share/ca-certificates/SunnyNet.crt; \
-    rm -f /tmp/WeChatLinux_arm64.deb; \
+    rm -f /tmp/WeChat.deb; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
