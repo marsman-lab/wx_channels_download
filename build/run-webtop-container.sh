@@ -26,6 +26,7 @@ run_args=(
     -d
     --name "$NAME"
     --network "$NETWORK"
+    --shm-size "${SHM_SIZE:-1g}"
     --restart=unless-stopped
     --hostname "$CONTAINER_HOSTNAME"
     --security-opt seccomp=unconfined
