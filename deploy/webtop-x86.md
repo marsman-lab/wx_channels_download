@@ -57,6 +57,60 @@ IMAGE=wx_video_download:x86 CONFIG_DIR=/var/lib/wx-dl/webtop NETWORK=shared_net 
 
 同 deploy/webtop-arm64.md 的「使用」一节：微信登录 → 浏览公众号/视频号 → 点注入的下载按钮 → 文件落地 `CONFIG_DIR/Downloads/`。
 
+## 分享链接 API（可选）：与 server 版能力对齐
+
+webtop 容器与 server 版是同一二进制，2022 端口的 REST API 同样注册。
+配置元宝 cookie 后，分享链接解析（`/api/scraper/fetch`）即可用——已实测
+全链路：fetch → create → 下载完成 → `/api/file` 取回本地。
+
+### 配置元宝 cookie
+
+```sh
+# 从云端 server 的配置（挂载在 /var/lib/wx-dl/config.yaml）取 cookie
+COOKIE=$(grep 'sphCookie:' /var/lib/wx-dl/config.yaml | head -1 | sed 's/.*sphCookie: *"//; s/".*//')
+
+# 写入 webtop 容器的运行时配置（种子模板里 cloudflare.sphCookie 默认为空）
+sudo sed -i "s|sphCookie: \"\"|sphCookie: \"$COOKIE\"|" /var/lib/wx-dl/webtop/wx_video_download/config.yaml
+
+# 重启下载器（微信不用动；config 启动时读取）
+docker exec wx_download bash -c 'pkill -f wx_video_download; sleep 2'
+docker exec -d wx_download /usr/local/bin/wx-start-downloader
+```
+
+### 通过 nginx 暴露 REST（`/wxapi/` 前缀，basic auth 后）
+
+webtop 的 server 块里加（`/wxapi/` 前缀避免与 KasmVNC 桌面路由冲突）：
+
+```nginx
+    location /wxapi/ {
+        proxy_pass http://wx_download:2022/;     # 末尾斜杠 = 去掉 /wxapi 前缀
+        proxy_set_header Host $host;
+    }
+```
+
+### 已实测的 REST 链路（2026-09-08）
+
+```sh
+BASE=https://wx.ihuloo.com/wxapi   # 换成你的域名
+
+# 1. 分享链接解析
+curl -u wx:*** -X POST $BASE/api/scraper/fetch -H 'Content-Type: application/json' \
+  -d '{"url":"https://weixin.qq.com/sph/xxxx","id":"t1"}'
+curl -u wx:*** $BASE/api/scraper/job?id=t1        # 轮询至 completed
+
+# 2. 建任务（content 用上一步 output.result，build_from_fetch=true）
+curl -u wx:*** -X POST $BASE/api/v1/download_task/create -H 'Content-Type: application/json' \
+  -d '{"objects":[{"platform":"wxchannels","content":<result>,"build_from_fetch":true,
+       "auto_start":true,"config":{"existing_action":"duplicate"}}]}'
+
+# 3. 进度与文件
+curl -u wx:*** "$BASE/api/v1/download_task/detail?id=<id>"   # files[].file_path, status=5 为完成
+curl -u wx:*** -G --data-urlencode "path=<file_path>" $BASE/api/file -o video.mp4
+```
+
+> **维护提醒**：元宝 cookie 会过期，server 与 webtop **两处各存一份**，
+> 失效时需同时更新（见 deploy/config.example.yaml 的获取说明；私号有封号风险，用小号）。
+
 ## 已固化的关键点（勿改）
 
 与 arm64 相同的三条（shm 1g、非 root、构建 tags 含 `sqlite_only`），原因见

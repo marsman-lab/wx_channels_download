@@ -36,6 +36,14 @@
   .desktop 补丁）：实测均非必需，回滚使镜像行为回归上游（312204f）
 - webtop 构建的中途方案（宿主 go 直接交叉编译、BASE_IMAGE 参数化、
   华为云基础镜像硬编码）：被上游 build-go.sh 修复取代，一并回滚（0241163）
+- **追平上游（rebase 到 d3a59ed5，force-push）**：bilibili 私有修复
+  （Referer bvid 兜底、DASH 音视频合并 postprocess、dashMerge 配置）
+  移除——上游 #548/#553 已原生实现等价能力
+  （`bilibili_video_source_url` / `bilibili/postprocess.go`）。同时移除
+  的还有 bilibili adapter 注册、source_url 透传等被上游覆盖的早期提交；
+  保留 `wxchannels/model.go` 的 Media Spec 填充（0ce24882，上游仍缺）。
+  上游新增：快手/微博/X/Instagram/飞书/U 盘/单文件等平台、B 站主页、
+  视频号原视频下载（#552/#553）
 
 ### Added
 
