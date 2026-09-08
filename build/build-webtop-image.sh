@@ -3,17 +3,20 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${IMAGE:-wx_video_download:v260607}"
-WECHAT_DEB="${WECHAT_DEB:-/Users/litao/Downloads/WeChatLinux_arm64.deb}"
+WECHAT_DEB="${WECHAT_DEB:-/Users/litao/Downloads/WeChat.deb}"
 TARGETARCH="${TARGETARCH:-arm64}"
 PLATFORM="${PLATFORM:-linux/${TARGETARCH}}"
 GOCACHE="${GOCACHE:-/tmp/wx-go-build-cache}"
 CONFIG_FILE="${CONFIG_FILE:-$ROOT_DIR/internal/config/config.template.yaml}"
 GLOBAL_SCRIPT="${GLOBAL_SCRIPT:-}"
 
-if [ "$TARGETARCH" != "arm64" ]; then
-    echo "Only TARGETARCH=arm64 is supported because the provided WeChat deb is arm64." >&2
-    exit 1
-fi
+case "$TARGETARCH" in
+    arm64|amd64) : ;;
+    *)
+        echo "Unsupported TARGETARCH=$TARGETARCH (use arm64 or amd64)." >&2
+        exit 1
+        ;;
+esac
 
 if [ ! -f "$WECHAT_DEB" ]; then
     echo "WeChat deb not found: $WECHAT_DEB" >&2
@@ -58,7 +61,7 @@ if [ -n "$GLOBAL_SCRIPT" ]; then
 else
     : > "$BUILD_DIR/global.js"
 fi
-cp "$WECHAT_DEB" "$BUILD_DIR/WeChatLinux_arm64.deb"
+cp "$WECHAT_DEB" "$BUILD_DIR/WeChat.deb"
 cp -R "$ROOT_DIR/docker/webtop/rootfs/." "$BUILD_DIR/rootfs/"
 
 echo "Building Docker image ${IMAGE}..."
