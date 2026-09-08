@@ -1,8 +1,4 @@
-# 基础镜像默认官方多架构源（Mac/ARM 宿主会解析出 linux/arm64 变体）。
-# 国内 x86 服务器若拉不动官方源，可 --build-arg BASE_IMAGE= 指向华为云 ddn-k8s
-# 镜像（注意该镜像源只有 amd64 变体，装 arm64 微信 deb 会失败）。
-ARG BASE_IMAGE=lscr.io/linuxserver/webtop:ubuntu-xfce
-FROM ${BASE_IMAGE}
+FROM lscr.io/linuxserver/webtop:ubuntu-xfce
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=zh_CN.UTF-8 \
@@ -16,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Copy files that rarely change and are needed by the install step
 COPY SunnyNet.cer /usr/local/share/ca-certificates/SunnyNet.crt
-COPY WeChat.deb /tmp/WeChat.deb
+COPY WeChatLinux_arm64.deb /tmp/WeChatLinux_arm64.deb
 
 # Expensive layer: cached as long as base image, cert, and deb don't change
 RUN set -eux; \
@@ -62,7 +58,7 @@ RUN set -eux; \
         libxtst6 \
         libxshmfence1 \
         libdrm2; \
-    apt-get install -y --no-install-recommends /tmp/WeChat.deb; \
+    apt-get install -y --no-install-recommends /tmp/WeChatLinux_arm64.deb; \
     sed -i 's/# *zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen; \
     locale-gen; \
     update-ca-certificates; \
@@ -71,7 +67,7 @@ RUN set -eux; \
     certutil -d sql:/etc/pki/nssdb -D -n SunnyRoot >/dev/null 2>&1 || true; \
     certutil -d sql:/etc/pki/nssdb -D -n SunnyNet >/dev/null 2>&1 || true; \
     certutil -d sql:/etc/pki/nssdb -A -n SunnyNet -t "CT,C,C" -i /usr/local/share/ca-certificates/SunnyNet.crt; \
-    rm -f /tmp/WeChat.deb; \
+    rm -f /tmp/WeChatLinux_arm64.deb; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 

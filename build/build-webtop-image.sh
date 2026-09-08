@@ -10,13 +10,10 @@ GOCACHE="${GOCACHE:-/tmp/wx-go-build-cache}"
 CONFIG_FILE="${CONFIG_FILE:-$ROOT_DIR/internal/config/config.template.yaml}"
 GLOBAL_SCRIPT="${GLOBAL_SCRIPT:-}"
 
-case "$TARGETARCH" in
-    arm64|amd64) : ;;
-    *)
-        echo "Unsupported TARGETARCH=$TARGETARCH (use arm64 or amd64)." >&2
-        exit 1
-        ;;
-esac
+if [ "$TARGETARCH" != "arm64" ]; then
+    echo "Only TARGETARCH=arm64 is supported because the provided WeChat deb is arm64." >&2
+    exit 1
+fi
 
 if [ ! -f "$WECHAT_DEB" ]; then
     echo "WeChat deb not found: $WECHAT_DEB" >&2
@@ -48,12 +45,8 @@ fi
 echo "Building wx_video_download for ${PLATFORM}..."
 (
     cd "$ROOT_DIR"
-    # 宿主 go 直接交叉编译。不走 build-go.sh(go run buildgo)：buildgo 会把
-    # 工具自身按 GOOS/GOARCH 编译后再 exec，在 macOS 等"宿主 != 目标"的环境
-    # 直接 exec format error。go build 只产出文件无此问题，且 Linux 宿主同样
-    # 适用。代价是跳过 buildgo 的 esbuild 压缩（仅体积差异，功能不变）。
-    env CGO_ENABLED=0 GOOS=linux GOARCH="$TARGETARCH" \
-        go build -trimpath -tags "with_gvisor,embed_inject,sqlite_only,embed_frontend_inject" -ldflags="-s -w -X main.Mode=release" \
+    env GOCACHE="$GOCACHE" CGO_ENABLED=0 GOOS=linux GOARCH="$TARGETARCH" \
+        bash build/build-go.sh -trimpath -tags "with_gvisor,embed_frontend_inject" -ldflags="-s -w -X main.Mode=release" \
         -o "$BUILD_DIR/wx_video_download" .
 )
 
@@ -65,7 +58,7 @@ if [ -n "$GLOBAL_SCRIPT" ]; then
 else
     : > "$BUILD_DIR/global.js"
 fi
-cp "$WECHAT_DEB" "$BUILD_DIR/WeChat.deb"
+cp "$WECHAT_DEB" "$BUILD_DIR/WeChatLinux_arm64.deb"
 cp -R "$ROOT_DIR/docker/webtop/rootfs/." "$BUILD_DIR/rootfs/"
 
 echo "Building Docker image ${IMAGE}..."
