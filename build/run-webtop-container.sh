@@ -4,9 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE="${IMAGE:-ghcr.io/ltaoo/wx_video_download:v260607}"
 NAME="${NAME:-wx_download}"
-CONFIG_DIR="${CONFIG_DIR:-/var/lib/wx-dl/webtop}"
+CONFIG_DIR="${CONFIG_DIR:-/config}"
 WEB_PORT="${WEB_PORT:-3000}"
-NETWORK="${NETWORK:-shared_net}"
 CONTAINER_HOSTNAME="${CONTAINER_HOSTNAME:-wx-linux}"
 TZ_VALUE="${TZ:-Asia/Shanghai}"
 RESOLUTION="${RESOLUTION:-1920x1080x24}"
@@ -30,7 +29,6 @@ run_args=(
     run
     -d
     --name "$NAME"
-    --network "$NETWORK"
     --shm-size "${SHM_SIZE:-1g}"
     --restart=unless-stopped
     --hostname "$CONTAINER_HOSTNAME"
@@ -46,6 +44,11 @@ run_args=(
     -p "${WEB_PORT}:3000"
     -v "${CONFIG_DIR}:/config"
 )
+
+# 可选：显式传 NETWORK= 才接入指定 docker 网络（如服务器上的 shared_net），默认不加
+if [ -n "${NETWORK:-}" ]; then
+    run_args+=(--network "$NETWORK")
+fi
 
 run_args+=("$IMAGE")
 
